@@ -15,8 +15,8 @@ warnings.filterwarnings('ignore')
 
 # Model configuration
 MODEL_PATHS = {
-    "general": "./models/sproutbot",  # General agriculture knowledge (default)
-    "advice": "./models/agribot_model_exp3"  # Agricultural advice and recommendations
+    "general": "mic55/sproutbot",  # General agriculture knowledge (default)
+    "advice": "mic55/agribot_model_exp3"  # Agricultural advice and recommendations
 }
 MAX_INPUT_LENGTH = 128
 MAX_OUTPUT_LENGTH = 128

@@ -98,6 +98,17 @@ Experiment 2 showed improved performance with:
 3. **ROUGE-2:** Bigram-based evaluation
 4. **ROUGE-L:** Longest common subsequence evaluation
 
+### Evaluation Summary
+
+| Metric  | Score |
+| ------- | ----- |
+| BLEU    | 17.09 |
+| ROUGE-1 | 42.14 |
+| ROUGE-2 | 25.36 |
+| ROUGE-L | 41.36 |
+
+
+
 ### Qualitative Testing
 
 - Tested with in-domain agricultural questions
@@ -262,9 +273,9 @@ SproutBot/
 
 ## Contributors
 
-- **Developer:** [Your Name]
-- **Course:** [Course Name]
-- **Institution:** [Institution Name]
+- **Developer:** Alain Michael Muhirwa
+- **Course:** Machine Learning Techniques I
+- **Institution:** ALU
 - **Date:** October 2025
 
 ## License
@@ -278,15 +289,10 @@ This project is for educational purposes as part of a university course assignme
 - TensorFlow team for the deep learning framework
 - Gradio for the web interface framework
 
-## Demo Video
-
-A 5-10 minute demo video showcasing the chatbot's functionality, user interactions, and key insights is available at:
-[Link to Demo Video]
-
 ## Contact
 
 For questions or feedback about this project, please contact:
-[Your Email]
+a.muhirwa@alustudent.com
 
 ---
 

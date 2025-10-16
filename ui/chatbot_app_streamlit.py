@@ -2,10 +2,14 @@
 SproutBot - Agricultural Domain Chatbot (Streamlit Version)
 A Transformer-based chatbot specialized in agriculture using T5 model
 """
-
+import gc
 import streamlit as st
 from transformers import TFAutoModelForSeq2SeqLM, AutoTokenizer
 import warnings
+
+import tensorflow as tf
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
 
 warnings.filterwarnings('ignore')
 
@@ -29,6 +33,14 @@ def load_model(model_key="general"):
     except Exception as e:
         st.error(f"Error loading model: {e}")
         st.stop()
+
+def unload_model():
+    """Manually clear TensorFlow model and free memory."""
+    try:
+        tf.keras.backend.clear_session()
+    except Exception:
+        pass
+    gc.collect()
 
 
 def generate_answer(question, model, tokenizer, max_length=MAX_OUTPUT_LENGTH):
@@ -637,6 +649,17 @@ def main():
     # Load the appropriate model based on current mode
     model, tokenizer = load_model(st.session_state.model_mode)
     
+    new_mode = st.radio("Select model:", ["sproutbot", "agribot"], key="model_mode")
+
+    # Check if user switched model
+    if "current_model" not in st.session_state or st.session_state.current_model != new_mode:
+        # unload previous model to free memory
+        unload_model()
+        with st.spinner(f"Loading {new_mode}..."):
+            st.session_state.model, st.session_state.tokenizer = load_model(new_mode)
+        st.session_state.current_model = new_mode
+
+
     # Header
     st.markdown("""
         <div class="chat-header">

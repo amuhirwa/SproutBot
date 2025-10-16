@@ -15,8 +15,8 @@ warnings.filterwarnings('ignore')
 
 # Model configuration
 MODEL_PATHS = {
-    "general": "mic55/sproutbot",  # General agriculture knowledge (default)
-    "advice": "mic55/agribot_model_exp3"  # Agricultural advice and recommendations
+    "general": "./models/sproutbot",  # General agriculture knowledge (default)
+    "advice": "./models/agribot_model_exp3"  # Agricultural advice and recommendations
 }
 MAX_INPUT_LENGTH = 128
 MAX_OUTPUT_LENGTH = 128
@@ -649,15 +649,12 @@ def main():
     # Load the appropriate model based on current mode
     model, tokenizer = load_model(st.session_state.model_mode)
     
-    new_mode = st.radio("Select model:", ["sproutbot", "agribot"], key="model_mode")
-
     # Check if user switched model
-    if "current_model" not in st.session_state or st.session_state.current_model != new_mode:
-        # unload previous model to free memory
+    if "current_model" not in st.session_state or st.session_state.current_model != st.session_state.model_mode:
         unload_model()
-        with st.spinner(f"Loading {new_mode}..."):
-            st.session_state.model, st.session_state.tokenizer = load_model(new_mode)
-        st.session_state.current_model = new_mode
+        with st.spinner(f"Loading {st.session_state.model_mode} model..."):
+            st.session_state.model, st.session_state.tokenizer = load_model(st.session_state.model_mode)
+        st.session_state.current_model = st.session_state.model_mode
 
 
     # Header

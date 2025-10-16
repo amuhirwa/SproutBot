@@ -42,6 +42,20 @@ def unload_model():
         pass
     gc.collect()
 
+def switch_model(new_mode):
+    if "current_model" not in st.session_state or st.session_state.current_model != new_mode:
+        # Delete old references
+        if "model" in st.session_state:
+            del st.session_state.model
+        if "tokenizer" in st.session_state:
+            del st.session_state.tokenizer
+        gc.collect()
+        tf.keras.backend.clear_session()
+
+        # Load new model
+        st.session_state.model, st.session_state.tokenizer = load_model(new_mode)
+        st.session_state.current_model = new_mode
+
 
 def generate_answer(question, model, tokenizer, max_length=MAX_OUTPUT_LENGTH):
     """
@@ -647,15 +661,8 @@ def main():
         st.session_state.model_mode = "general"  # Default to general knowledge model
     
     # Load the appropriate model based on current mode
-    model, tokenizer = load_model(st.session_state.model_mode)
-    
-    # Check if user switched model
-    if "current_model" not in st.session_state or st.session_state.current_model != st.session_state.model_mode:
-        unload_model()
-        with st.spinner(f"Loading {st.session_state.model_mode} model..."):
-            st.session_state.model, st.session_state.tokenizer = load_model(st.session_state.model_mode)
-        st.session_state.current_model = st.session_state.model_mode
-
+    switch_model(st.session_state.model_mode)
+    model, tokenizer = st.session_state.model, st.session_state.tokenizer
 
     # Header
     st.markdown("""

@@ -10,17 +10,21 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Model configuration
-MODEL_PATH = "./models/agribot_model_exp3"
+MODEL_PATHS = {
+    "general": "./models/sproutbot",  # General agriculture knowledge (default)
+    "advice": "./models/agribot_model_exp3"  # Agricultural advice and recommendations
+}
 MAX_INPUT_LENGTH = 128
 MAX_OUTPUT_LENGTH = 128
 
 
 @st.cache_resource
-def load_model():
+def load_model(model_key="general"):
     """Load model and tokenizer (cached for performance)"""
     try:
-        model = TFAutoModelForSeq2SeqLM.from_pretrained(MODEL_PATH)
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+        model_path = MODEL_PATHS[model_key]
+        model = TFAutoModelForSeq2SeqLM.from_pretrained(model_path)
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
         return model, tokenizer
     except Exception as e:
         st.error(f"Error loading model: {e}")
@@ -124,7 +128,7 @@ def main():
         
         /* Color Palette */
         :root {
-            --primary-green: #2D5016;
+            --primary-green: #66BB6A;
             --light-green: #5A7C3E;
             --accent-green: #7FA650;
             --brown: #6B4423;
@@ -140,17 +144,18 @@ def main():
         .main {
             background-color: var(--off-white);
             padding: 0 !important;
+            overflow-y: auto !important;
+            height: 100vh !important;
         }
         
         .block-container {
-            padding: 0 !important;
+            padding: 16px !important;
             max-width: 100% !important;
         }
         
         /* Header */
         .chat-header {
             background: transparent;
-            padding: 2rem 2rem 1rem 2rem;
             border-radius: 0;
             margin-bottom: 0;
             box-shadow: none;
@@ -175,7 +180,6 @@ def main():
         }
         
         .header-text {
-            flex: 0;
             text-align: center;
         }
         
@@ -193,6 +197,65 @@ def main():
             font-size: 1rem;
             margin: 0.3rem 0 0 0;
             font-weight: 400;
+        }
+        
+        /* Model toggle */
+        .model-toggle-container {
+            background-color: var(--white);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .model-toggle-label {
+            color: var(--text-dark);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        /* Toggle button styling */
+        .model-toggle-container .stButton > button {
+            background-color: var(--white);
+            color: var(--text-dark);
+            border: 2px solid var(--light-gray);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .model-toggle-container .stButton > button:hover {
+            background-color: var(--off-white);
+            border-color: var(--accent-green);
+        }
+        
+        /* Active button styling */
+        .model-toggle-container [data-testid="column"]:has(button[kind="primary"]) .stButton > button,
+        .model-toggle-container .stButton > button[kind="primary"] {
+            background-color: var(--primary-green) !important;
+            color: var(--white) !important;
+            border: 2px solid var(--primary-green) !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 4px rgba(45, 80, 22, 0.3);
+        }
+        
+        .model-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .model-badge.general {
+            background-color: #E8F5E9;
+            color: var(--primary-green);
+        }
+        
+        .model-badge.advice {
+            background-color: #FFF3E0;
+            color: #E65100;
         }
         
         /* Instructions banner */
@@ -261,10 +324,8 @@ def main():
             background-color: var(--white);
             border-radius: 0;
             padding: 2rem;
-            margin-bottom: 0;
-            min-height: calc(100vh - 500px);
-            max-height: calc(100vh - 500px);
-            overflow-y: auto;
+            margin-bottom: 1rem;
+            min-height: 400px;
             box-shadow: none;
             border: none;
             border-bottom: 1px solid var(--light-gray);
@@ -395,15 +456,9 @@ def main():
         
         /* Fixed input area */
         .fixed-input-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--white);
-            padding: 1.5rem 2rem;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            border-top: 1px solid var(--light-gray);
+            background-color: transparent;
+            padding: 0;
+            margin: 0;
         }
         
         .input-wrapper {
@@ -412,6 +467,20 @@ def main():
             display: flex;
             gap: 0.75rem;
             align-items: center;
+        }
+        
+        /* Ensure input components stay in position */
+        .fixed-input-container .stTextInput,
+        .fixed-input-container .stButton {
+            margin-bottom: 0 !important;
+        }
+                
+        .st-emotion-cache-8atqhb {
+                height: 60px;
+                }
+        
+        .fixed-input-container [data-testid="column"] {
+            position: relative !important;
         }
         
         /* Examples section - removed duplicate */
@@ -450,9 +519,36 @@ def main():
             box-shadow: 0 0 0 3px rgba(45, 80, 22, 0.1);
         }
         
-        /* Add padding to bottom of content to account for fixed input */
-        .main .block-container {
-            padding-bottom: 120px !important;
+        /* Target the last element container to make it fixed */
+        .main .block-container > [data-testid="stVerticalBlock"]:last-child {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9999 !important;
+            background-color: var(--white) !important;
+            padding: 1.5rem 2rem !important;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+            border-top: 1px solid var(--light-gray) !important;
+        }
+        
+        /* Ensure the columns in the fixed container display correctly */
+        .main .block-container > [data-testid="stVerticalBlock"]:last-child [data-testid="column"] {
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        /* Force all children to stay within container */
+        .main .block-container > [data-testid="stVerticalBlock"]:last-child > div {
+            position: relative !important;
+            display: flex !important;
+            width: 100% !important;
+        }
+        
+        .main .block-container > [data-testid="stVerticalBlock"]:last-child [data-testid="stHorizontalBlock"] {
+            width: 100% !important;
+            max-width: 1200px !important;
+            margin: 0 auto !important;
         }
         
         /* Scrollbar styling */
@@ -528,15 +624,18 @@ def main():
     """, unsafe_allow_html=True)
     
     # Load model
-    model, tokenizer = load_model()
-    
-    # Initialize session state for chat history
+    # Initialize session state
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
     if 'question_count' not in st.session_state:
         st.session_state.question_count = 0
     if 'is_processing' not in st.session_state:
         st.session_state.is_processing = False
+    if 'model_mode' not in st.session_state:
+        st.session_state.model_mode = "general"  # Default to general knowledge model
+    
+    # Load the appropriate model based on current mode
+    model, tokenizer = load_model(st.session_state.model_mode)
     
     # Header
     st.markdown("""
@@ -551,34 +650,95 @@ def main():
         </div>
     """, unsafe_allow_html=True)
     
+    # Model Toggle Section
+    st.markdown('<div class="model-toggle-container">', unsafe_allow_html=True)
+    
+    st.markdown('<div style="text-align: center; margin-bottom: 0.5rem; color: var(--text-gray); font-weight: 500;">Select Mode:</div>', unsafe_allow_html=True)
+    
+    col_toggle1, col_toggle2, col_toggle3 = st.columns([1, 2, 1])
+    
+    with col_toggle2:
+        # Create two side-by-side toggle buttons
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            is_general = st.session_state.model_mode == "general"
+            if st.button(
+                "🌾 General Knowledge",
+                use_container_width=True,
+                key="general_btn",
+                type="primary" if is_general else "secondary"
+            ):
+                if not is_general:
+                    st.session_state.model_mode = "general"
+                    st.rerun()
+        
+        with col_btn2:
+            is_advice = st.session_state.model_mode == "advice"
+            if st.button(
+                "💡 Advice & Tips",
+                use_container_width=True,
+                key="advice_btn",
+                type="primary" if is_advice else "secondary"
+            ):
+                if not is_advice:
+                    st.session_state.model_mode = "advice"
+                    st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Display current model info
+    if st.session_state.model_mode == "general":
+        st.markdown("""
+            <div style='background-color: #E8F5E9; padding: 0.75rem 2rem; text-align: center; border-bottom: 1px solid var(--light-gray);'>
+                <span style='color: var(--primary-green); font-weight: 600; font-size: 0.9rem;'>
+                    🌾 General Knowledge Mode: Best for agricultural facts, concepts, and general farming information
+                </span>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+            <div style='background-color: #FFF3E0; padding: 0.75rem 2rem; text-align: center; border-bottom: 1px solid var(--light-gray);'>
+                <span style='color: #E65100; font-weight: 600; font-size: 0.9rem;'>
+                    💡 Advice & Recommendations Mode: Best for fertilizer advice, funding info, and practical recommendations
+                </span>
+            </div>
+        """, unsafe_allow_html=True)
+    
     # Instructions Banner
     st.markdown("""
         <div class="instructions-banner">
-            <strong>How to Use:</strong> Type your agricultural question in the input box at the bottom • 
+            <strong>How to Use:</strong> Toggle between models above • 
+            Type your agricultural question in the input box at the bottom • 
             Click example questions below for quick start • Use "Clear" to start fresh
         </div>
     """, unsafe_allow_html=True)
     
     # Example Questions Section - Moved to top
-    examples = [
-        "How do I control aphid infestation in mustard crops?",
-        "What is the best fertilizer for wheat cultivation?",
-        "How to manage fungal disease in tomato plants?",
-        "When should I apply nitrogen fertilizer to rice crops?",
-        "What are the symptoms of iron deficiency in plants?",
-        "How to improve soil fertility naturally?",
-        "What is the best time to harvest corn?",
-        "How to control whitefly in cotton crops?",
-    ]
+    # Different examples based on model mode
+    if st.session_state.model_mode == "general":
+        examples = [
+            "What is plant growth?",
+            "How does irrigation affect plant growth?",
+            "What are the main types of soil?",
+            "When is the best time to plant potatoes?",
+        ]
+    else:
+        examples = [
+            "How do I control aphid infestation in mustard crops?",
+            "What is the best fertilizer for wheat cultivation?",
+            "How to manage fungal disease in tomato plants?",
+            "When should I apply nitrogen fertilizer to rice crops?",
+            "How to control whitefly in cotton crops?",
+        ]
     
-    st.markdown('<div class="examples-container">', unsafe_allow_html=True)
     st.markdown('<div class="examples-title">💡 Try These Questions</div>', unsafe_allow_html=True)
     
     # Display examples in a grid using columns
     cols = st.columns(4)
     for idx, example in enumerate(examples):
         with cols[idx % 4]:
-            if st.button(f"📝 {example}", key=f"example_{idx}", use_container_width=True):
+            if st.button(f"{example}", key=f"example_{idx}", use_container_width=True):
                 st.session_state.is_processing = True
                 st.session_state.temp_question = example
                 st.rerun()
@@ -596,9 +756,6 @@ def main():
         st.session_state.is_processing = False
         delattr(st.session_state, 'temp_question')
         st.rerun()
-    
-    # Chat Container
-    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         
     if st.session_state.is_processing:
         # Loading state
@@ -642,26 +799,29 @@ def main():
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Fixed Input Area at bottom
-    st.markdown('<div class="fixed-input-container">', unsafe_allow_html=True)
+    # Fixed Input Area at bottom - using container to force fixed positioning
+    input_container = st.container()
     
-    col1, col2, col3 = st.columns([8, 1, 1])
-    
-    with col1:
-        user_question = st.text_input(
-            "Type your question here:",
-            placeholder="e.g., How do I control aphids in my wheat crop?",
-            key="question_input",
-            label_visibility="collapsed"
-        )
-    
-    with col2:
-        send_button = st.button("Send", use_container_width=True, type="primary")
-    
-    with col3:
-        clear_button = st.button("Clear", use_container_width=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    with input_container:
+        st.markdown('<div class="fixed-input-container">', unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([8, 1, 1])
+        
+        with col1:
+            user_question = st.text_input(
+                "Type your question here:",
+                placeholder="e.g., How do I control aphids in my wheat crop?",
+                key="question_input",
+                label_visibility="collapsed"
+            )
+        
+        with col2:
+            send_button = st.button("Send", use_container_width=True, type="primary")
+        
+        with col3:
+            clear_button = st.button("Clear", use_container_width=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Handle clear button
     if clear_button:
@@ -695,7 +855,8 @@ def main():
         st.metric("Questions Asked", st.session_state.question_count)
     
     with col2:
-        st.metric("Domain", "Agriculture")
+        model_name = "General Knowledge" if st.session_state.model_mode == "general" else "Advice & Recommendations"
+        st.metric("Current Mode", model_name)
     
     with col3:
         st.metric("Model", "T5 Transformer")
